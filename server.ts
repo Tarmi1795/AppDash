@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = 3002;
+  const PORT = 3003;
 
   // In-memory store for the latest uploaded data
   let latestData: any[] | null = null;

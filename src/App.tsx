@@ -4,49 +4,54 @@
  */
 
 import { useState, useEffect } from 'react';
-import { FileUpload } from './components/FileUpload';
 import { Dashboard } from './components/Dashboard';
 import { Previewer } from './components/Previewer';
-import { DirectEntry } from './components/DirectEntry';
+import { TopNav } from './components/TopNav';
 import { processContractData } from './utils/dataParser';
 import { ProcessedContract, RawContractData } from './types';
 import { ThemeProvider } from './context/ThemeContext';
-import { LayoutDashboard, FileSpreadsheet, PenLine } from 'lucide-react';
+import { bulkSaveEntries, fetchAllEntries } from './utils/supabase';
 
 export default function App() {
   const [rawData, setRawData] = useState<RawContractData[] | null>(null);
   const [processedData, setProcessedData] = useState<ProcessedContract[] | null>(null);
-  const [activeView, setActiveView] = useState<'upload' | 'preview' | 'dashboard' | 'direct'>('upload');
+  const [activeView, setActiveView] = useState<'entry' | 'preview' | 'dashboard'>('entry');
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleDirectDataLoaded = (data: RawContractData[]) => {
-    setRawData(data);
-    setActiveView('preview');
-  };
-
-  const handleAddEntry = (entry: RawContractData) => {
-    if (rawData) {
-      setRawData([...rawData, entry]);
-    }
-  };
-
-  // Check for data from the API on mount
   useEffect(() => {
-    const fetchLatestData = async () => {
+    const initApp = async () => {
       try {
-        const response = await fetch('/api/data');
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.length > 0) {
-            setRawData(data);
-            setProcessedData(processContractData(data));
-            setActiveView('dashboard');
-          }
+        const entries = await fetchAllEntries();
+        if (entries && entries.length > 0) {
+          const formattedData = entries.map(entry => ({
+            'Serial No.': entry['Serial No.'] || '',
+            'Customer Name': entry['Customer Name'] || '',
+            'CONTRACT NO.': entry['CONTRACT NO.'] || '',
+            'WBS': entry['WBS'] || '',
+            ' Dhareeba No. ': entry[' Dhareeba No. '] || '',
+            'Billing Currency (short name)': entry['Billing Currency (short name)'] || 'QAR',
+            'Project Country Location': entry['Project Country Location'] || '',
+            'Signing Date (per contract)-dd/mm/yyy': entry['Signing Date (per contract)-dd/mm/yyy'] || '',
+            'Start Date (per contract)-dd/mm/yyy': entry['Start Date (per contract)-dd/mm/yyy'] || '',
+            'Est. Completion Date-dd/mm/yyy': entry['Est. Completion Date-dd/mm/yyy'] || '',
+            'Total Contract Revenue Value *1000 (Est.)': entry['Total Contract Revenue Value *1000 (Est.)'] || '',
+            'Contract Value QAR': entry['Contract Value QAR'] || '',
+            'Remarks': entry['Remarks'] || '',
+            'DEPARTMENT': entry['DEPARTMENT'] || '',
+            'Comparison remarks (local vs. Dhareeba)': entry['Comparison remarks (local vs. Dhareeba)'] || ''
+          })) as RawContractData[];
+
+          setRawData(formattedData);
+          setProcessedData(processContractData(formattedData));
+          setActiveView('dashboard');
         }
       } catch (error) {
-        console.error('Failed to fetch latest data:', error);
+        console.error('Failed to load from database:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
-    fetchLatestData();
+    initApp();
   }, []);
 
   const handleDataLoaded = (data: RawContractData[]) => {
@@ -54,7 +59,8 @@ export default function App() {
     setActiveView('preview');
   };
 
-  const handleConfirm = (updatedData: RawContractData[]) => {
+  const handleConfirm = async (updatedData: RawContractData[]) => {
+    await bulkSaveEntries(updatedData);
     setRawData(updatedData);
     setProcessedData(processContractData(updatedData));
     setActiveView('dashboard');
@@ -62,63 +68,30 @@ export default function App() {
 
   const handleCancel = () => {
     setRawData(null);
-    setProcessedData(null);
-    setActiveView('upload');
+    setActiveView('entry');
   };
 
   return (
     <ThemeProvider>
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300">
-        {activeView === 'preview' && rawData && (
-          <nav className="border-b border-white/10 bg-[#121626]/80 backdrop-blur-xl sticky top-0 z-50 shadow-2xl">
-            <div className="max-w-[1600px] mx-auto px-8 h-16 flex items-center">
-              <div className="flex items-center gap-2 bg-white/5 p-1 rounded-lg border border-white/10">
-                <button 
-                  onClick={() => setActiveView('preview')} 
-                  className={`px-4 py-1.5 rounded-md text-[10px] font-sans font-bold uppercase tracking-widest transition-all flex items-center gap-2 ${activeView === 'preview' ? 'bg-copper text-obsidian shadow-[0_0_15px_rgba(217,119,6,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
-                  Preview Excel File
-                </button>
-                <button 
-                  onClick={() => setActiveView('dashboard')} 
-                  className={`px-4 py-1.5 rounded-md text-[10px] font-sans font-bold uppercase tracking-widest transition-all flex items-center gap-2 ${activeView === 'dashboard' ? 'bg-copper text-obsidian shadow-[0_0_15px_rgba(217,119,6,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                >
-                  <LayoutDashboard className="w-3.5 h-3.5" />
-                  Dashboard
-                </button>
-                <button 
-                  onClick={() => setActiveView('direct')} 
-                  className={`px-4 py-1.5 rounded-md text-[10px] font-sans font-bold uppercase tracking-widest transition-all flex items-center gap-2 ${activeView === 'direct' ? 'bg-copper text-obsidian shadow-[0_0_15px_rgba(217,119,6,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                >
-                  <PenLine className="w-3.5 h-3.5" />
-                  Direct Entry
-                </button>
-              </div>
-            </div>
-          </nav>
-        )}
-        
-        {activeView === 'upload' ? (
+        <TopNav activeView={activeView} onNavigate={setActiveView} />
+
+        {isLoading ? (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="w-12 h-12 border-2 border-copper border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : activeView === 'entry' ? (
           <div className="flex items-center justify-center min-h-screen p-4 md:p-8">
-            <FileUpload onDataLoaded={handleDataLoaded} onDirectEntry={() => setActiveView('direct')} />
+            <Previewer onDataLoaded={handleDataLoaded} />
           </div>
         ) : activeView === 'preview' && rawData ? (
-          <Previewer 
-            data={rawData} 
-            onConfirm={handleConfirm} 
+          <Previewer
+            data={rawData}
+            onConfirm={handleConfirm}
             onCancel={handleCancel}
-            onDirectEntry={() => setActiveView('direct')}
-            onAddEntry={handleAddEntry}
-          />
-        ) : activeView === 'direct' ? (
-          <DirectEntry 
-            onDataLoaded={handleDirectDataLoaded}
-            existingData={rawData || []}
-            onAddEntry={handleAddEntry}
           />
         ) : (
-          processedData && <Dashboard data={processedData} onNavigate={(view) => setActiveView(view)} />
+          processedData && <Dashboard data={processedData} onNavigate={setActiveView} />
         )}
       </div>
     </ThemeProvider>

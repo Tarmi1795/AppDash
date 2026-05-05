@@ -2,12 +2,11 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { ProcessedContract } from '../types';
 import { format, startOfMonth, subMonths } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
+import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-  BarChart, Bar, PieChart, Pie, Cell, Legend
+  BarChart, Bar, PieChart, Pie, Cell, Legend, LabelList
 } from 'recharts';
-import { TrendingUp, Users, FileText, Calendar, Filter, ChevronDown, ChevronUp, Sun, Moon, Maximize2, Minimize2, Search, LayoutDashboard, FileSpreadsheet } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
+import { TrendingUp, Users, FileText, Calendar, Filter, ChevronDown, ChevronUp, Maximize2, Minimize2, Search, LayoutDashboard, FileSpreadsheet } from 'lucide-react';
 
 interface DashboardProps {
   data: ProcessedContract[];
@@ -53,15 +52,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
   const [viewType, setViewType] = useState<'monthly' | 'yearly'>('monthly');
   const [isContractsExpanded, setIsContractsExpanded] = useState(false);
   const [isClientsExpanded, setIsClientsExpanded] = useState(false);
-  const { theme, toggleTheme } = useTheme();
-
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [theme]);
 
   const clients = useMemo(() => {
     const c = new Set<string>();
@@ -366,56 +356,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
   }, [data, startDate, endDate, selectedClient, selectedContract, selectedDepartment]);
 
   return (
-    <div className="min-h-screen text-white selection:bg-copper selection:text-obsidian">
+    <div className="min-h-screen text-white selection:bg-copper selection:text-obsidian overflow-x-hidden">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,#8B4000_0%,#050505_100%)] -z-10" />
       <div className="noise-bg" />
-      
-      {/* Top Navigation / Status Bar */}
-      <nav className="border-b border-white/10 bg-[#121626]/80 backdrop-blur-xl sticky top-0 z-50 shadow-2xl">
-        <div className="max-w-[1600px] mx-auto px-8">
-          {/* Top Row */}
-          <div className="h-16 flex items-center justify-between border-b border-white/5">
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2 bg-white/5 p-1 rounded-lg border border-white/10 mr-4">
-                <button 
-                  onClick={() => onNavigate('preview')} 
-                  className="px-4 py-1.5 rounded-md text-[10px] font-sans font-bold uppercase tracking-widest transition-all flex items-center gap-2 text-gray-400 hover:text-white hover:bg-white/5"
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
-                  Preview Excel File
-                </button>
-                <button 
-                  onClick={() => onNavigate('dashboard')} 
-                  className="px-4 py-1.5 rounded-md text-[10px] font-sans font-bold uppercase tracking-widest transition-all flex items-center gap-2 bg-copper text-obsidian shadow-[0_0_15px_rgba(217,119,6,0.3)]"
-                >
-                  <LayoutDashboard className="w-3.5 h-3.5" />
-                  Dashboard
-                </button>
-              </div>
-              <div className="w-px h-4 bg-white/10" />
-              <h1 className="font-sans font-semibold text-lg tracking-tight uppercase">Contract Analysis Dashboard <span className="text-gray-600 font-mono not-italic text-[10px] ml-3 uppercase tracking-widest opacity-50">v2.0.4</span></h1>
-            </div>
-            
-            <div className="flex items-center gap-8">
-              <button 
-                onClick={toggleTheme}
-                className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
-              >
-                {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
-              </button>
-              <div className="flex items-center gap-4">
-                <img 
-                  src="https://iili.io/qVKkIEu.png" 
-                  alt="Logo" 
-                  className="h-16 w-auto object-contain brightness-110 contrast-125"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-            </div>
-          </div>
 
-          {/* Filter Row */}
-          <div className="py-4 grid grid-cols-2 md:grid-cols-5 gap-6 items-end">
+      {/* Filter Row */}
+      <div className="pt-16 pb-4 px-4 md:px-8 overflow-x-auto">
+        <div className="grid grid-cols-5 gap-4 items-end min-w-[900px]">
             <div className="flex flex-col gap-1">
               <label className="font-mono text-[8px] uppercase tracking-widest text-gray-500">From</label>
               <div className="relative space-y-1">
@@ -650,7 +597,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
             </div>
           </div>
         </div>
-      </nav>
 
       <main className="max-w-[1600px] mx-auto p-8 space-y-8 relative">
 
@@ -737,14 +683,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
                       axisLine={false}
                     />
                     <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: '#D97706', strokeWidth: 1 }} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="Revenue" 
-                      stroke="#D97706" 
-                      strokeWidth={2} 
-                      dot={false}
-                      activeDot={{ r: 6, fill: '#D97706', strokeWidth: 0 }} 
-                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Revenue"
+                      stroke="#D97706"
+                      strokeWidth={2}
+                      dot={viewType === 'yearly'}
+                      activeDot={{ r: 6, fill: '#D97706', strokeWidth: 0 }}
+                    >
+                      {viewType === 'yearly' && (
+                        <LabelList
+                          dataKey="Revenue"
+                          position="top"
+                          style={{ fill: '#9ca3af', fontSize: 9, fontFamily: 'JetBrains Mono' }}
+                          formatter={(value: number) => `${(value / 1000000).toFixed(1)}M`}
+                        />
+                      )}
+                    </Line>
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -869,14 +824,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
                         axisLine={false}
                       />
                       <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: '#D97706', strokeWidth: 1 }} />
-                      <Line 
-                        type="monotone" 
-                        dataKey="Balance" 
-                        stroke="#D97706" 
-                        strokeWidth={2} 
-                        dot={false}
-                        activeDot={{ r: 6, fill: '#D97706', strokeWidth: 0 }} 
-                      />
+                      <Line
+                        type="monotone"
+                        dataKey="Balance"
+                        stroke="#D97706"
+                        strokeWidth={2}
+                        dot={viewType === 'yearly'}
+                        activeDot={{ r: 6, fill: '#D97706', strokeWidth: 0 }}
+                      >
+                        {viewType === 'yearly' && (
+                          <LabelList
+                            dataKey="Balance"
+                            position="top"
+                            style={{ fill: '#9ca3af', fontSize: 9, fontFamily: 'JetBrains Mono' }}
+                            formatter={(value: number) => `${(value / 1000000).toFixed(1)}M`}
+                          />
+                        )}
+                      </Line>
                     </LineChart>
                   </ResponsiveContainer>
                 </div>

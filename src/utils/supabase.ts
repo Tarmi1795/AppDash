@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://zqqmxzunmxmnngeyosiv.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpxcW14enVubXhtbm5nZXlvc2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwMjc4NjksImV4cCI6MjA2MTYwMzg2OX0.LOM0Wl1_H-bZ3CZmNaJqVE1cLPt7tTHK3TJeW9f8x9M';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpxcW14enVubXhtbm5nZXlvc2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNzk1MjcsImV4cCI6MjA4ODg1NTUyN30.oQlS-cR5FAowWO1K11JPnGMQ1ptRwy4KCBr2n2VmR3k';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -41,10 +41,18 @@ export async function fetchDirectEntries(tenantId: string = 'default'): Promise<
 export async function saveDirectEntry(entry: Partial<any>, tenantId: string = 'default'): Promise<boolean> {
   const config = getTenantConfig(tenantId);
 
+  const numericFields = ['Total Contract Revenue Value *1000 (Est.)', 'Contract Value QAR'];
+  const processedEntry = { ...entry };
+  for (const field of numericFields) {
+    if (processedEntry[field] === '' || processedEntry[field] === null) {
+      processedEntry[field] = null;
+    }
+  }
+
   const { error } = await supabase
     .from('direct_entries')
     .insert([{
-      ...entry,
+      ...processedEntry,
       tenant_id: tenantId,
       created_at: new Date().toISOString()
     }]);
@@ -69,4 +77,98 @@ export async function deleteDirectEntry(id: string, tenantId: string = 'default'
   }
 
   return true;
+}
+
+const VALID_COLUMNS = [
+  'Customer Name',
+  'CONTRACT NO.',
+  'WBS',
+  ' Dhareeba No. ',
+  'Billing Currency (short name)',
+  'Project Country Location',
+  'Signing Date (per contract)-dd/mm/yyy',
+  'Start Date (per contract)-dd/mm/yyy',
+  'Est. Completion Date-dd/mm/yyy',
+  'Total Contract Revenue Value *1000 (Est.)',
+  'Contract Value QAR',
+  'Remarks',
+  'DEPARTMENT',
+  'Comparison remarks (local vs. Dhareeba)'
+];
+
+const COLUMN_MAP: Record<string, string> = {
+  'DEPARTMENT(sample data)': 'DEPARTMENT',
+  'No.': 'Serial No.'
+};
+
+export async function bulkSaveEntries(entries: Partial<any>[], tenantId: string = 'default'): Promise<{ success: boolean; saved: number; duplicates: number }> {
+  const dateFields = [
+  'Signing Date (per contract)-dd/mm/yyy',
+  'Start Date (per contract)-dd/mm/yyy',
+  'Est. Completion Date-dd/mm/yyy'
+];
+
+const numericFields = ['Total Contract Revenue Value *1000 (Est.)', 'Contract Value QAR'];
+
+const existingEntries = await fetchDirectEntries(tenantId);
+const existingContractNos = new Set(existingEntries.map(e => e['CONTRACT NO.']));
+
+const newEntries: Partial<any>[] = [];
+let duplicateCount = 0;
+
+for (const entry of entries) {
+  const contractNo = entry['CONTRACT NO.'];
+  if (contractNo && existingContractNos.has(contractNo)) {
+    duplicateCount++;
+    continue;
+  }
+  const processedEntry: Record<string, any> = {};
+  for (const key of VALID_COLUMNS) {
+    if (key in entry) {
+      const dbKey = COLUMN_MAP[key] || key;
+      const value = entry[key];
+      if (numericFields.includes(key) || dateFields.includes(key)) {
+        processedEntry[dbKey] = (value === '' || value === null || value === undefined) ? null : value;
+      } else {
+        processedEntry[dbKey] = value;
+      }
+    }
+  }
+  newEntries.push({
+    ...processedEntry,
+    tenant_id: tenantId,
+    created_at: new Date().toISOString()
+  });
+}
+
+  if (newEntries.length === 0) {
+    return { success: true, saved: 0, duplicates: duplicateCount };
+  }
+
+  console.log('Inserting entries:', JSON.stringify(newEntries.slice(0, 2), null, 2));
+  const { error } = await supabase
+    .from('direct_entries')
+    .insert(newEntries);
+
+  if (error) {
+    console.error('Error bulk saving entries:', error.code, error.message, error.details, error.hint);
+    alert(`Save failed: ${error.message}`);
+    return { success: false, saved: 0, duplicates: duplicateCount };
+  }
+
+  return { success: true, saved: newEntries.length, duplicates: duplicateCount };
+}
+
+export async function fetchAllEntries(tenantId: string = 'default'): Promise<any[]> {
+  const { data, error } = await supabase
+    .from('direct_entries')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching entries:', error);
+    return [];
+  }
+
+  return data || [];
 }
