@@ -1,6 +1,9 @@
 -- Drop existing table if it exists (careful - this will delete all data!)
 DROP TABLE IF EXISTS public.direct_entries;
 
+-- Set date format for this session (dates are stored as dd/mm/yyyy in Excel)
+SET datestyle = 'ISO, DMY';
+
 -- Create table with exact column names that match the app
 CREATE TABLE public.direct_entries (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

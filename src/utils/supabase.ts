@@ -79,6 +79,38 @@ export async function deleteDirectEntry(id: string, tenantId: string = 'default'
   return true;
 }
 
+export async function updateDirectEntry(id: string, entry: Partial<any>, tenantId: string = 'default'): Promise<boolean> {
+  const numericFields = ['Total Contract Revenue Value *1000 (Est.)', 'Contract Value QAR'];
+  const dateFields = [
+    'Signing Date (per contract)-dd/mm/yyy',
+    'Start Date (per contract)-dd/mm/yyy',
+    'Est. Completion Date-dd/mm/yyy'
+  ];
+
+  const processedEntry: Record<string, any> = {};
+  for (const [key, value] of Object.entries(entry)) {
+    if (numericFields.includes(key)) {
+      processedEntry[key] = (value === '' || value === null || value === undefined) ? null : value;
+    } else if (dateFields.includes(key)) {
+      processedEntry[key] = (value === '' || value === null || value === undefined) ? null : value;
+    } else {
+      processedEntry[key] = value;
+    }
+  }
+
+  const { error } = await supabase
+    .from('direct_entries')
+    .update(processedEntry)
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error updating entry:', error);
+    return false;
+  }
+
+  return true;
+}
+
 const VALID_COLUMNS = [
   'Customer Name',
   'CONTRACT NO.',
@@ -110,6 +142,33 @@ export async function bulkSaveEntries(entries: Partial<any>[], tenantId: string 
 
 const numericFields = ['Total Contract Revenue Value *1000 (Est.)', 'Contract Value QAR'];
 
+const parseDate = (value: any): string | null => {
+  if (value === '' || value === null || value === undefined) return null;
+  if (value instanceof Date) return value.toISOString();
+  const str = String(value).trim();
+  if (!str) return null;
+
+  // Handle dd/mm/yyyy format
+  const ddmmyyyy = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (ddmmyyyy) {
+    const [, day, month, year] = ddmmyyyy;
+    return new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00.000Z`).toISOString();
+  }
+
+  // Handle mm/dd/yyyy format
+  const mmddyyyy = str.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (mmddyyyy) {
+    const [, month, day, year] = mmddyyyy;
+    return new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00.000Z`).toISOString();
+  }
+
+  // Try parsing as ISO
+  const date = new Date(str);
+  if (!isNaN(date.getTime())) return date.toISOString();
+
+  return null;
+};
+
 const existingEntries = await fetchDirectEntries(tenantId);
 const existingContractNos = new Set(existingEntries.map(e => e['CONTRACT NO.']));
 
@@ -127,8 +186,10 @@ for (const entry of entries) {
     if (key in entry) {
       const dbKey = COLUMN_MAP[key] || key;
       const value = entry[key];
-      if (numericFields.includes(key) || dateFields.includes(key)) {
+      if (numericFields.includes(key)) {
         processedEntry[dbKey] = (value === '' || value === null || value === undefined) ? null : value;
+      } else if (dateFields.includes(key)) {
+        processedEntry[dbKey] = parseDate(value);
       } else {
         processedEntry[dbKey] = value;
       }

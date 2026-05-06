@@ -1,12 +1,12 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { ProcessedContract } from '../types';
 import { format, startOfMonth, subMonths } from 'date-fns';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-  BarChart, Bar, PieChart, Pie, Cell, Legend, LabelList
+  BarChart, Bar, LabelList
 } from 'recharts';
-import { TrendingUp, Users, FileText, Calendar, Filter, ChevronDown, ChevronUp, Maximize2, Minimize2, Search, LayoutDashboard, FileSpreadsheet } from 'lucide-react';
+import { TrendingUp, Users, FileText, ChevronDown, Maximize2, Minimize2, Search } from 'lucide-react';
 
 interface DashboardProps {
   data: ProcessedContract[];
@@ -21,15 +21,13 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
-const COLORS = ['#D97706', '#B45309', '#92400E', '#78350F', '#451A03', '#F59E0B', '#FBBF24', '#FCD34D', '#FDE68A', '#FEF3C7'];
-
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-copper/30 p-4 shadow-xl">
-        <p className="font-mono text-[10px] text-slate-500 dark:text-copper uppercase tracking-widest mb-2">{label}</p>
-        <p className="text-xl font-semibold text-slate-900 dark:text-white">
-          {formatCurrency(payload[0].value)} <span className="text-[10px] uppercase font-mono text-slate-400">QAR</span>
+      <div className="bg-white border-amber-200 shadow-xl p-4">
+        <p className="font-mono text-[10px] text-amber-700 uppercase tracking-widest mb-2">{label}</p>
+        <p className="text-xl font-semibold text-slate-900">
+          {formatCurrency(payload[0].value)} <span className="text-[10px] uppercase font-mono text-slate-500">QAR</span>
         </p>
       </div>
     );
@@ -83,14 +81,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
     return ['All', ...Array.from(d).sort()];
   }, [data, deptSearch]);
 
-  // Reset client if it's no longer in the filtered list
   useEffect(() => {
     if (selectedClient !== 'All' && !clients.includes(selectedClient)) {
       setSelectedClient('All');
     }
   }, [clients, selectedClient]);
 
-  // Reset contract if it's no longer in the filtered list
   useEffect(() => {
     if (selectedContract !== 'All' && !contractOptions.includes(selectedContract)) {
       setSelectedContract('All');
@@ -116,7 +112,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
 
       c.proratedMonths.forEach(pm => {
         const isInRange = (!start || pm.month >= start) && (!end || pm.month <= end);
-        
+
         if (isInRange) {
           isActiveInPeriod = true;
           contractValueInPeriod += pm.value;
@@ -154,11 +150,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
       c.proratedMonths.forEach(pm => {
         const year = parseInt(format(pm.month, 'yyyy'));
         if (year < 2020) return;
-        
+
         const isInRange = (!start || pm.month >= start) && (!end || pm.month <= end);
-        
+
         if (isInRange) {
-          const key = viewType === 'monthly' 
+          const key = viewType === 'monthly'
             ? format(pm.month, 'MMM yyyy')
             : format(pm.month, 'yyyy');
           trendMap.set(key, (trendMap.get(key) || 0) + pm.value);
@@ -181,14 +177,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
       c.proratedMonths.forEach(pm => {
         const year = parseInt(format(pm.month, 'yyyy'));
         if (year < 2020) return;
-        
+
         const isInRange = (!start || pm.month >= start) && (!end || pm.month <= end);
         if (isInRange) {
-          const key = viewType === 'monthly' 
+          const key = viewType === 'monthly'
             ? format(pm.month, 'yyyy-MM')
             : format(pm.month, 'yyyy');
-          
-          // For yearly, we want the balance at the end of the year (or latest month in range)
+
           if (!timeMap.has(key) || pm.month > timeMap.get(key)!) {
             timeMap.set(key, pm.month);
           }
@@ -197,7 +192,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
     });
 
     const sortedKeys = Array.from(timeMap.keys()).sort();
-    
+
     return sortedKeys.map(key => {
       const targetDate = timeMap.get(key)!;
       let totalRemainingAtDate = 0;
@@ -213,7 +208,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
             recognizedUpToDate += pm.value;
           }
         });
-        
+
         const balance = Math.max(0, c.totalValue - recognizedUpToDate);
         totalRemainingAtDate += balance;
       });
@@ -224,48 +219,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
       };
     });
   }, [data, startDate, endDate, selectedClient, selectedContract, selectedDepartment, viewType]);
-
-  const topClientsData = useMemo(() => {
-    const clientMap = new Map<string, number>();
-    const start = startDate ? startOfMonth(new Date(startDate)) : null;
-    const end = endDate ? startOfMonth(new Date(endDate)) : null;
-
-    data.forEach(c => {
-      if (selectedClient !== 'All' && c.client !== selectedClient) return;
-      if (selectedContract !== 'All' && c.contractNo !== selectedContract) return;
-      if (selectedDepartment !== 'All' && c.department !== selectedDepartment) return;
-
-      let revenueInPeriod = 0;
-      c.proratedMonths.forEach(pm => {
-        const isInRange = (!start || pm.month >= start) && (!end || pm.month <= end);
-        if (isInRange) revenueInPeriod += pm.value;
-      });
-      if (revenueInPeriod > 0) clientMap.set(c.client, (clientMap.get(c.client) || 0) + revenueInPeriod);
-    });
-    return Array.from(clientMap.entries()).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 10);
-  }, [data, startDate, endDate, selectedClient, selectedContract, selectedDepartment]);
-
-  const topContractsRemaining = useMemo(() => {
-    const contractMap = new Map<string, number>();
-    const start = startDate ? startOfMonth(new Date(startDate)) : null;
-    const end = endDate ? startOfMonth(new Date(endDate)) : null;
-
-    data.forEach(c => {
-      if (selectedClient !== 'All' && c.client !== selectedClient) return;
-      if (selectedContract !== 'All' && c.contractNo !== selectedContract) return;
-      if (selectedDepartment !== 'All' && c.department !== selectedDepartment) return;
-
-      let remainingInPeriod = 0;
-      c.proratedMonths.forEach(pm => {
-        const isInRange = (!start || pm.month >= start) && (!end || pm.month <= end);
-        if (isInRange && pm.month >= startOfMonth(new Date())) remainingInPeriod += pm.value;
-      });
-      if (remainingInPeriod > 0) {
-        contractMap.set(c.contractNo, (contractMap.get(c.contractNo) || 0) + remainingInPeriod);
-      }
-    });
-    return Array.from(contractMap.entries()).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 10);
-  }, [data, startDate, endDate, selectedClient, selectedContract, selectedDepartment]);
 
   const contractBalancesAsOf = useMemo(() => {
     const balances: { contract: ProcessedContract; balance: number }[] = [];
@@ -349,265 +302,260 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
         const isInRange = (!start || pm.month >= start) && (!end || pm.month <= end);
         if (isInRange) revenueInPeriod += pm.value;
       });
-      
+
       deptMap.set(c.department, (deptMap.get(c.department) || 0) + revenueInPeriod);
     });
     return deptMap;
   }, [data, startDate, endDate, selectedClient, selectedContract, selectedDepartment]);
 
   return (
-    <div className="min-h-screen text-white selection:bg-copper selection:text-obsidian overflow-x-hidden">
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,#8B4000_0%,#050505_100%)] -z-10" />
-      <div className="noise-bg" />
-
-      {/* Filter Row */}
-      <div className="pt-16 pb-4 px-4 md:px-8 overflow-x-auto">
+    <div className="min-h-screen text-slate-900 selection:bg-copper selection:text-obsidian overflow-x-hidden bg-[#fff5d9]">
+      <div className="pt-4 pb-4 px-4 md:px-8">
         <div className="grid grid-cols-5 gap-4 items-end min-w-[900px]">
-            <div className="flex flex-col gap-1">
-              <label className="font-mono text-[8px] uppercase tracking-widest text-gray-500">From</label>
-              <div className="relative space-y-1">
-                <div className="relative">
-                  <input 
-                    type="text"
-                    placeholder="Search month..."
-                    value={startDateSearch}
-                    onChange={(e) => setStartDateSearch(e.target.value)}
-                    onFocus={() => setActiveSearchField('startDate')}
-                    onBlur={() => setTimeout(() => setActiveSearchField(null), 200)}
-                    className="w-full bg-transparent border-b border-white/10 text-[10px] font-mono focus:ring-0 focus:border-copper transition-colors p-0 pb-1 placeholder:text-gray-700"
-                  />
-                  <Search className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 text-gray-600 pointer-events-none" />
-                  
-                  {activeSearchField === 'startDate' && startDateSearch && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-[#121626]/95 backdrop-blur-xl border border-white/10 rounded shadow-2xl z-[60] max-h-40 overflow-y-auto">
-                      {availableMonths.filter(m => {
-                        const date = new Date(m);
-                        const search = startDateSearch.toLowerCase();
-                        return format(date, 'MMM yyyy').toLowerCase().includes(search) || 
-                               format(date, 'MMMM yyyy').toLowerCase().includes(search);
-                      }).slice(0, 5).map(m => (
-                        <button
-                          key={m}
-                          className="w-full text-left px-3 py-2 text-[10px] font-mono hover:bg-copper hover:text-obsidian transition-colors truncate"
-                          onClick={() => {
-                            setStartDate(m);
-                            setStartDateSearch('');
-                          }}
-                        >
-                          {format(new Date(m), 'MMM yyyy')}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="relative">
-                  <select 
-                    value={startDate} 
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full bg-transparent border-none text-xs font-sans font-medium focus:ring-0 cursor-pointer appearance-none p-0"
-                  >
-                    <option value="" className="bg-[#121626]">Start</option>
-                    {availableMonths.map(m => <option key={m} value={m} className="bg-[#121626]">{format(new Date(m), 'MMM yyyy')}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 text-copper pointer-events-none" />
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="font-mono text-[8px] uppercase tracking-widest text-gray-500">To</label>
-              <div className="relative space-y-1">
-                <div className="relative">
-                  <input 
-                    type="text"
-                    placeholder="Search month..."
-                    value={endDateSearch}
-                    onChange={(e) => setEndDateSearch(e.target.value)}
-                    onFocus={() => setActiveSearchField('endDate')}
-                    onBlur={() => setTimeout(() => setActiveSearchField(null), 200)}
-                    className="w-full bg-transparent border-b border-white/10 text-[10px] font-mono focus:ring-0 focus:border-copper transition-colors p-0 pb-1 placeholder:text-gray-700"
-                  />
-                  <Search className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 text-gray-600 pointer-events-none" />
-                  
-                  {activeSearchField === 'endDate' && endDateSearch && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-[#121626]/95 backdrop-blur-xl border border-white/10 rounded shadow-2xl z-[60] max-h-40 overflow-y-auto">
-                      {availableMonths.filter(m => {
-                        const date = new Date(m);
-                        const search = endDateSearch.toLowerCase();
-                        return format(date, 'MMM yyyy').toLowerCase().includes(search) || 
-                               format(date, 'MMMM yyyy').toLowerCase().includes(search);
-                      }).slice(0, 5).map(m => (
-                        <button
-                          key={m}
-                          className="w-full text-left px-3 py-2 text-[10px] font-mono hover:bg-copper hover:text-obsidian transition-colors truncate"
-                          onClick={() => {
-                            setEndDate(m);
-                            setEndDateSearch('');
-                          }}
-                        >
-                          {format(new Date(m), 'MMM yyyy')}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="relative">
-                  <select 
-                    value={endDate} 
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full bg-transparent border-none text-xs font-sans font-medium focus:ring-0 cursor-pointer appearance-none p-0"
-                  >
-                    <option value="" className="bg-[#121626]">End</option>
-                    {availableMonths.map(m => <option key={m} value={m} className="bg-[#121626]">{format(new Date(m), 'MMM yyyy')}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 text-copper pointer-events-none" />
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="font-mono text-[8px] uppercase tracking-widest text-gray-500">Client</label>
-              <div className="relative space-y-1">
-                <div className="relative">
-                  <input 
-                    type="text"
-                    placeholder="Search client..."
-                    value={clientSearch}
-                    onChange={(e) => setClientSearch(e.target.value)}
-                    onFocus={() => setActiveSearchField('client')}
-                    onBlur={() => setTimeout(() => setActiveSearchField(null), 200)}
-                    className="w-full bg-transparent border-b border-white/10 text-[10px] font-mono focus:ring-0 focus:border-copper transition-colors p-0 pb-1 placeholder:text-gray-700"
-                  />
-                  <Search className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 text-gray-600 pointer-events-none" />
-                  
-                  {activeSearchField === 'client' && clientSearch && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-[#121626]/95 backdrop-blur-xl border border-white/10 rounded shadow-2xl z-[60] max-h-40 overflow-y-auto">
-                      {clients.filter(c => c !== 'All').slice(0, 5).map(c => (
-                        <button
-                          key={c}
-                          className="w-full text-left px-3 py-2 text-[10px] font-mono hover:bg-copper hover:text-obsidian transition-colors truncate"
-                          onClick={() => {
-                            setSelectedClient(c);
-                            setClientSearch('');
-                          }}
-                        >
-                          {c}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="relative">
-                  <select 
-                    value={selectedClient} 
-                    onChange={(e) => setSelectedClient(e.target.value)}
-                    className="w-full bg-transparent border-none text-xs font-sans font-medium focus:ring-0 cursor-pointer appearance-none p-0"
-                  >
-                    {clients.map(c => <option key={c} value={c} className="bg-[#121626]">{c}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 text-copper pointer-events-none" />
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="font-mono text-[8px] uppercase tracking-widest text-gray-500">Contract</label>
-              <div className="relative space-y-1">
-                <div className="relative">
-                  <input 
-                    type="text"
-                    placeholder="Search contract..."
-                    value={contractSearch}
-                    onChange={(e) => setContractSearch(e.target.value)}
-                    onFocus={() => setActiveSearchField('contract')}
-                    onBlur={() => setTimeout(() => setActiveSearchField(null), 200)}
-                    className="w-full bg-transparent border-b border-white/10 text-[10px] font-mono focus:ring-0 focus:border-copper transition-colors p-0 pb-1 placeholder:text-gray-700"
-                  />
-                  <Search className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 text-gray-600 pointer-events-none" />
+          <div className="flex flex-col gap-1">
+            <label className="font-mono text-[8px] uppercase tracking-widest text-slate-600">From</label>
+            <div className="relative space-y-1">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search month..."
+                  value={startDateSearch}
+                  onChange={(e) => setStartDateSearch(e.target.value)}
+                  onFocus={() => setActiveSearchField('startDate')}
+                  onBlur={() => setTimeout(() => setActiveSearchField(null), 200)}
+                  className="w-full bg-white/80 border border-slate-200 rounded-md px-3 py-2 text-[10px] font-mono focus:ring-2 focus:ring-copper/30 focus:border-copper transition-colors placeholder:text-slate-400 text-slate-900"
+                />
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
 
-                  {activeSearchField === 'contract' && contractSearch && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-[#121626]/95 backdrop-blur-xl border border-white/10 rounded shadow-2xl z-[60] max-h-40 overflow-y-auto">
-                      {contractOptions.filter(c => c !== 'All').slice(0, 5).map(c => (
-                        <button
-                          key={c}
-                          className="w-full text-left px-3 py-2 text-[10px] font-mono hover:bg-copper hover:text-obsidian transition-colors truncate"
-                          onClick={() => {
-                            setSelectedContract(c);
-                            setContractSearch('');
-                          }}
-                        >
-                          {c}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="relative">
-                  <select 
-                    value={selectedContract} 
-                    onChange={(e) => setSelectedContract(e.target.value)}
-                    className="w-full bg-transparent border-none text-xs font-sans font-medium focus:ring-0 cursor-pointer appearance-none p-0"
-                  >
-                    {contractOptions.map(c => <option key={c} value={c} className="bg-[#121626]">{c}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 text-copper pointer-events-none" />
-                </div>
+                {activeSearchField === 'startDate' && startDateSearch && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-[60] max-h-40 overflow-y-auto">
+                    {availableMonths.filter(m => {
+                      const date = new Date(m);
+                      const search = startDateSearch.toLowerCase();
+                      return format(date, 'MMM yyyy').toLowerCase().includes(search) ||
+                             format(date, 'MMMM yyyy').toLowerCase().includes(search);
+                    }).slice(0, 5).map(m => (
+                      <button
+                        key={m}
+                        className="w-full text-left px-3 py-2 text-[10px] font-mono hover:bg-copper hover:text-obsidian transition-colors truncate"
+                        onClick={() => {
+                          setStartDate(m);
+                          setStartDateSearch('');
+                        }}
+                      >
+                        {format(new Date(m), 'MMM yyyy')}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="relative">
+                <select
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full bg-white/80 border border-slate-200 rounded-md px-3 py-2 text-xs font-sans font-medium focus:ring-2 focus:ring-copper/30 focus:border-copper cursor-pointer text-slate-900"
+                >
+                  <option value="" className="bg-white">Start</option>
+                  {availableMonths.map(m => <option key={m} value={m} className="bg-white">{format(new Date(m), 'MMM yyyy')}</option>)}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-copper pointer-events-none" />
               </div>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="font-mono text-[8px] uppercase tracking-widest text-gray-500">Department</label>
-              <div className="relative space-y-1">
-                <div className="relative">
-                  <input 
-                    type="text"
-                    placeholder="Search dept..."
-                    value={deptSearch}
-                    onChange={(e) => setDeptSearch(e.target.value)}
-                    onFocus={() => setActiveSearchField('dept')}
-                    onBlur={() => setTimeout(() => setActiveSearchField(null), 200)}
-                    className="w-full bg-transparent border-b border-white/10 text-[10px] font-mono focus:ring-0 focus:border-copper transition-colors p-0 pb-1 placeholder:text-gray-700"
-                  />
-                  <Search className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 text-gray-600 pointer-events-none" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="font-mono text-[8px] uppercase tracking-widest text-slate-600">To</label>
+            <div className="relative space-y-1">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search month..."
+                  value={endDateSearch}
+                  onChange={(e) => setEndDateSearch(e.target.value)}
+                  onFocus={() => setActiveSearchField('endDate')}
+                  onBlur={() => setTimeout(() => setActiveSearchField(null), 200)}
+                  className="w-full bg-white/80 border border-slate-200 rounded-md px-3 py-2 text-[10px] font-mono focus:ring-2 focus:ring-copper/30 focus:border-copper transition-colors placeholder:text-slate-400 text-slate-900"
+                />
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
 
-                  {activeSearchField === 'dept' && deptSearch && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-[#121626]/95 backdrop-blur-xl border border-white/10 rounded shadow-2xl z-[60] max-h-40 overflow-y-auto">
-                      {departments.filter(d => d !== 'All').slice(0, 5).map(d => (
-                        <button
-                          key={d}
-                          className="w-full text-left px-3 py-2 text-[10px] font-mono hover:bg-copper hover:text-obsidian transition-colors truncate"
-                          onClick={() => {
-                            setSelectedDepartment(d);
-                            setDeptSearch('');
-                          }}
-                        >
-                          {d}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="relative">
-                  <select 
-                    value={selectedDepartment} 
-                    onChange={(e) => setSelectedDepartment(e.target.value)}
-                    className="w-full bg-transparent border-none text-xs font-sans font-medium focus:ring-0 cursor-pointer appearance-none p-0"
-                  >
-                    {departments.map(d => <option key={d} value={d} className="bg-[#121626]">{d}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 text-copper pointer-events-none" />
-                </div>
+                {activeSearchField === 'endDate' && endDateSearch && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-[60] max-h-40 overflow-y-auto">
+                    {availableMonths.filter(m => {
+                      const date = new Date(m);
+                      const search = endDateSearch.toLowerCase();
+                      return format(date, 'MMM yyyy').toLowerCase().includes(search) ||
+                             format(date, 'MMMM yyyy').toLowerCase().includes(search);
+                    }).slice(0, 5).map(m => (
+                      <button
+                        key={m}
+                        className="w-full text-left px-3 py-2 text-[10px] font-mono hover:bg-copper hover:text-obsidian transition-colors truncate"
+                        onClick={() => {
+                          setEndDate(m);
+                          setEndDateSearch('');
+                        }}
+                      >
+                        {format(new Date(m), 'MMM yyyy')}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="relative">
+                <select
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full bg-white/80 border border-slate-200 rounded-md px-3 py-2 text-xs font-sans font-medium focus:ring-2 focus:ring-copper/30 focus:border-copper cursor-pointer text-slate-900"
+                >
+                  <option value="" className="bg-white">End</option>
+                  {availableMonths.map(m => <option key={m} value={m} className="bg-white">{format(new Date(m), 'MMM yyyy')}</option>)}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-copper pointer-events-none" />
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="font-mono text-[8px] uppercase tracking-widest text-slate-600">Client</label>
+            <div className="relative space-y-1">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search client..."
+                  value={clientSearch}
+                  onChange={(e) => setClientSearch(e.target.value)}
+                  onFocus={() => setActiveSearchField('client')}
+                  onBlur={() => setTimeout(() => setActiveSearchField(null), 200)}
+                  className="w-full bg-white/80 border border-slate-200 rounded-md px-3 py-2 text-[10px] font-mono focus:ring-2 focus:ring-copper/30 focus:border-copper transition-colors placeholder:text-slate-400 text-slate-900"
+                />
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+
+                {activeSearchField === 'client' && clientSearch && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-[60] max-h-40 overflow-y-auto">
+                    {clients.filter(c => c !== 'All').slice(0, 5).map(c => (
+                      <button
+                        key={c}
+                        className="w-full text-left px-3 py-2 text-[10px] font-mono hover:bg-copper hover:text-obsidian transition-colors truncate"
+                        onClick={() => {
+                          setSelectedClient(c);
+                          setClientSearch('');
+                        }}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="relative">
+                <select
+                  value={selectedClient}
+                  onChange={(e) => setSelectedClient(e.target.value)}
+                  className="w-full bg-white/80 border border-slate-200 rounded-md px-3 py-2 text-xs font-sans font-medium focus:ring-2 focus:ring-copper/30 focus:border-copper cursor-pointer text-slate-900"
+                >
+                  {clients.map(c => <option key={c} value={c} className="bg-white">{c}</option>)}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-copper pointer-events-none" />
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="font-mono text-[8px] uppercase tracking-widest text-slate-600">Contract</label>
+            <div className="relative space-y-1">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search contract..."
+                  value={contractSearch}
+                  onChange={(e) => setContractSearch(e.target.value)}
+                  onFocus={() => setActiveSearchField('contract')}
+                  onBlur={() => setTimeout(() => setActiveSearchField(null), 200)}
+                  className="w-full bg-white/80 border border-slate-200 rounded-md px-3 py-2 text-[10px] font-mono focus:ring-2 focus:ring-copper/30 focus:border-copper transition-colors placeholder:text-slate-400 text-slate-900"
+                />
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+
+                {activeSearchField === 'contract' && contractSearch && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-[60] max-h-40 overflow-y-auto">
+                    {contractOptions.filter(c => c !== 'All').slice(0, 5).map(c => (
+                      <button
+                        key={c}
+                        className="w-full text-left px-3 py-2 text-[10px] font-mono hover:bg-copper hover:text-obsidian transition-colors truncate"
+                        onClick={() => {
+                          setSelectedContract(c);
+                          setContractSearch('');
+                        }}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="relative">
+                <select
+                  value={selectedContract}
+                  onChange={(e) => setSelectedContract(e.target.value)}
+                  className="w-full bg-white/80 border border-slate-200 rounded-md px-3 py-2 text-xs font-sans font-medium focus:ring-2 focus:ring-copper/30 focus:border-copper cursor-pointer text-slate-900"
+                >
+                  {contractOptions.map(c => <option key={c} value={c} className="bg-white">{c}</option>)}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-copper pointer-events-none" />
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="font-mono text-[8px] uppercase tracking-widest text-slate-600">Department</label>
+            <div className="relative space-y-1">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search dept..."
+                  value={deptSearch}
+                  onChange={(e) => setDeptSearch(e.target.value)}
+                  onFocus={() => setActiveSearchField('dept')}
+                  onBlur={() => setTimeout(() => setActiveSearchField(null), 200)}
+                  className="w-full bg-white/80 border border-slate-200 rounded-md px-3 py-2 text-[10px] font-mono focus:ring-2 focus:ring-copper/30 focus:border-copper transition-colors placeholder:text-slate-400 text-slate-900"
+                />
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+
+                {activeSearchField === 'dept' && deptSearch && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-[60] max-h-40 overflow-y-auto">
+                    {departments.filter(d => d !== 'All').slice(0, 5).map(d => (
+                      <button
+                        key={d}
+                        className="w-full text-left px-3 py-2 text-[10px] font-mono hover:bg-copper hover:text-obsidian transition-colors truncate"
+                        onClick={() => {
+                          setSelectedDepartment(d);
+                          setDeptSearch('');
+                        }}
+                      >
+                        {d}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="relative">
+                <select
+                  value={selectedDepartment}
+                  onChange={(e) => setSelectedDepartment(e.target.value)}
+                  className="w-full bg-white/80 border border-slate-200 rounded-md px-3 py-2 text-xs font-sans font-medium focus:ring-2 focus:ring-copper/30 focus:border-copper cursor-pointer text-slate-900"
+                >
+                  {departments.map(d => <option key={d} value={d} className="bg-white">{d}</option>)}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-copper pointer-events-none" />
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-      <main className="max-w-[1600px] mx-auto p-8 space-y-8 relative">
+      <main className="max-w-[1600px] mx-auto p-8 space-y-8">
 
-        {/* KPI Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
             { label: 'Total Contract Value', value: metrics.totalContractValue, icon: FileText, suffix: 'QAR' },
             { label: 'Remaining Balance', value: metrics.totalRemainingBalance, icon: TrendingUp, suffix: 'QAR', highlight: true },
             { label: 'Active Contracts', value: metrics.activeContractsCount, icon: Users, suffix: 'Units' }
           ].map((kpi, i) => (
-            <motion.div 
+            <motion.div
               key={kpi.label}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -618,67 +566,65 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
               <div className="refractive-highlight" />
               <div className="relative z-10">
                 <div className="flex justify-between items-start mb-6">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-gray-400">{kpi.label}</span>
-                  <kpi.icon className={`w-4 h-4 ${kpi.highlight ? 'text-copper' : 'text-gray-500'}`} />
+                  <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">{kpi.label}</span>
+                  <kpi.icon className={`w-5 h-5 ${kpi.highlight ? 'text-copper' : 'text-slate-400'}`} />
                 </div>
                 <div className="space-y-1">
-                  <p className={`text-3xl font-sans font-semibold tracking-tight ${kpi.highlight ? 'text-copper' : 'text-white'}`}>
+                  <p className={`text-3xl font-sans font-semibold tracking-tight ${kpi.highlight ? 'text-copper' : 'text-slate-900'}`}>
                     {typeof kpi.value === 'number' ? formatCurrency(kpi.value) : kpi.value}
                   </p>
-                  <p className="font-mono text-[9px] uppercase tracking-widest text-gray-400">{kpi.suffix} // Verified</p>
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-slate-400">{kpi.suffix} // Verified</p>
                 </div>
               </div>
-              <div className="absolute bottom-0 left-0 h-px bg-copper/20 w-0 group-hover:w-full transition-all duration-700" />
+              <div className="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-transparent via-copper/40 to-transparent w-0 group-hover:w-full transition-all duration-700" />
             </motion.div>
           ))}
         </div>
 
-        {/* Main Visualization Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* Revenue Trajectory */}
-          <motion.div 
+        <div className="grid grid-cols-1 gap-8">
+
+          <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="lg:col-span-12 glass-card p-8 flex flex-col min-h-[500px] hover:border-white/40 transition-colors duration-500 relative"
+            className="glass-card p-8 flex flex-col min-h-[500px]"
           >
             <div className="laser-beam" style={{ animationDelay: '1s' }} />
             <div className="refractive-highlight" />
             <div className="relative z-10 flex flex-col flex-1">
               <div className="flex justify-between items-center mb-10">
                 <div className="space-y-1">
-                  <h3 className="text-2xl font-serif italic">Revenue Trajectory</h3>
-                  <p className="font-mono text-[9px] uppercase tracking-widest text-gray-400">{viewType === 'monthly' ? 'Monthly' : 'Yearly'} Prorated Forecast // Aggregate</p>
+                  <h3 className="text-2xl font-serif italic text-slate-900">Revenue Trajectory</h3>
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-slate-500">{viewType === 'monthly' ? 'Monthly' : 'Yearly'} Prorated Forecast // Aggregate</p>
                 </div>
                 <div className="flex gap-2">
-                  <button 
+                  <button
                     onClick={() => setViewType('monthly')}
-                    className={`w-10 h-10 border border-white/5 flex items-center justify-center text-[10px] font-mono transition-colors ${viewType === 'monthly' ? 'bg-copper text-obsidian' : 'text-gray-500 hover:bg-white/5'}`}
+                    className={`w-10 h-10 border flex items-center justify-center text-[10px] font-mono transition-all ${viewType === 'monthly' ? 'bg-copper text-obsidian border-copper shadow-lg shadow-copper/20' : 'bg-white/60 backdrop-blur-sm border-white/50 text-slate-600 hover:bg-white/80'}`}
                   >
                     M
                   </button>
-                  <button 
+                  <button
                     onClick={() => setViewType('yearly')}
-                    className={`w-10 h-10 border border-white/5 flex items-center justify-center text-[10px] font-mono transition-colors ${viewType === 'yearly' ? 'bg-copper text-obsidian' : 'text-gray-500 hover:bg-white/5'}`}
+                    className={`w-10 h-10 border flex items-center justify-center text-[10px] font-mono transition-all ${viewType === 'yearly' ? 'bg-copper text-obsidian border-copper shadow-lg shadow-copper/20' : 'bg-white/60 backdrop-blur-sm border-white/50 text-slate-600 hover:bg-white/80'}`}
                   >
                     Y
                   </button>
                 </div>
               </div>
-              
+
               <div className="flex-1 min-h-[400px]">
                 <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <LineChart data={monthlyTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                    <XAxis 
-                      dataKey="name" 
-                      stroke="rgba(255,255,255,0.1)" 
-                      tick={{fill: '#9ca3af', fontSize: 9, fontFamily: 'JetBrains Mono'}} 
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" vertical={false} />
+                    <XAxis
+                      dataKey="name"
+                      stroke="rgba(0,0,0,0.2)"
+                      tick={{fill: '#6b7280', fontSize: 9, fontFamily: 'JetBrains Mono'}}
                       axisLine={false}
                     />
-                    <YAxis 
-                      stroke="rgba(255,255,255,0.1)" 
-                      tick={{fill: '#9ca3af', fontSize: 9, fontFamily: 'JetBrains Mono'}} 
+                    <YAxis
+                      stroke="rgba(0,0,0,0.2)"
+                      tick={{fill: '#6b7280', fontSize: 9, fontFamily: 'JetBrains Mono'}}
                       tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
                       axisLine={false}
                     />
@@ -695,7 +641,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
                         <LabelList
                           dataKey="Revenue"
                           position="top"
-                          style={{ fill: '#9ca3af', fontSize: 9, fontFamily: 'JetBrains Mono' }}
+                          style={{ fill: '#6b7280', fontSize: 9, fontFamily: 'JetBrains Mono' }}
                           formatter={(value: number) => `${(value / 1000000).toFixed(1)}M`}
                         />
                       )}
@@ -706,53 +652,52 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
             </div>
           </motion.div>
 
-          {/* Contract Balances Table */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="lg:col-span-12 glass-card p-8 flex flex-col hover:border-white/40 transition-colors duration-500 relative"
+            className="glass-card p-8 flex flex-col"
           >
             <div className="laser-beam" style={{ animationDelay: '2s' }} />
             <div className="refractive-highlight" />
             <div className="relative z-10">
               <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-6">
-                  <h3 className="text-xl font-sans font-semibold">Contract Running Balance</h3>
+                  <h3 className="text-xl font-sans font-semibold text-slate-900">Contract Running Balance</h3>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsContractsExpanded(!isContractsExpanded)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 transition-all group"
+                  className="flex items-center gap-2 px-4 py-2 bg-white/60 hover:bg-white/80 border border-white/50 rounded-lg transition-all group"
                 >
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-gray-400 group-hover:text-copper">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-slate-600 group-hover:text-copper">
                     {isContractsExpanded ? 'Collapse View' : 'Expand View'}
                   </span>
                   {isContractsExpanded ? <Minimize2 className="w-4 h-4 text-copper" /> : <Maximize2 className="w-4 h-4 text-copper" />}
                 </button>
               </div>
-              
+
               <div className={`overflow-hidden transition-all duration-500 ${isContractsExpanded ? 'max-h-[2000px]' : 'max-h-[500px]'}`}>
-                <div className="overflow-y-auto max-h-[500px] scrollbar-hide">
+                <div className="overflow-y-auto max-h-[500px] rounded-lg">
                   <table className="w-full text-left border-collapse">
-                    <thead className="sticky top-0 bg-[#121626] z-10">
-                      <tr className="border-b border-white/5">
-                        <th className="p-4 font-mono text-[10px] uppercase text-gray-500 w-16">#</th>
-                        <th className="p-4 font-mono text-[10px] uppercase text-gray-500">Contract ID</th>
-                        <th className="p-4 font-mono text-[10px] uppercase text-gray-500">Client</th>
-                        <th className="p-4 font-mono text-[10px] uppercase text-gray-500 text-right">Total Value</th>
-                        <th className="p-4 font-mono text-[10px] uppercase text-gray-500 text-right">Balance As Of</th>
+                    <thead className="sticky top-0 bg-white/80 backdrop-blur-sm z-10">
+                      <tr className="border-b border-slate-200">
+                        <th className="p-4 font-mono text-[10px] uppercase text-slate-600 w-16">#</th>
+                        <th className="p-4 font-mono text-[10px] uppercase text-slate-600">Contract ID</th>
+                        <th className="p-4 font-mono text-[10px] uppercase text-slate-600">Client</th>
+                        <th className="p-4 font-mono text-[10px] uppercase text-slate-600 text-right">Total Value</th>
+                        <th className="p-4 font-mono text-[10px] uppercase text-slate-600 text-right">Balance As Of</th>
                       </tr>
                     </thead>
                     <tbody>
                       {contractBalancesAsOf
                         .slice(0, isContractsExpanded ? undefined : 10)
                         .map((item, idx) => (
-                          <tr key={item.contract.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                            <td className="p-4 font-mono text-[10px] text-gray-600">{idx + 1}</td>
-                            <td className="p-4 font-mono text-xs">{item.contract.contractNo}</td>
-                            <td className="p-4 font-sans text-sm">{item.contract.client}</td>
-                            <td className="p-4 font-mono text-sm text-right">{formatCurrency(item.contract.totalValue)}</td>
-                            <td className="p-4 font-mono text-sm text-right text-copper">{formatCurrency(item.balance)}</td>
+                          <tr key={item.contract.id} className="border-b border-slate-100 hover:bg-white/50 transition-colors">
+                            <td className="p-4 font-mono text-[10px] text-slate-500">{idx + 1}</td>
+                            <td className="p-4 font-mono text-xs text-slate-700">{item.contract.contractNo}</td>
+                            <td className="p-4 font-sans text-sm text-slate-800">{item.contract.client}</td>
+                            <td className="p-4 font-mono text-sm text-right text-slate-700">{formatCurrency(item.contract.totalValue)}</td>
+                            <td className="p-4 font-mono text-sm text-right text-copper font-semibold">{formatCurrency(item.balance)}</td>
                           </tr>
                         ))}
                     </tbody>
@@ -760,9 +705,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
                 </div>
                 {!isContractsExpanded && contractBalancesAsOf.length > 10 && (
                   <div className="pt-4 text-center">
-                    <button 
+                    <button
                       onClick={() => setIsContractsExpanded(true)}
-                      className="font-mono text-[10px] uppercase tracking-widest text-copper hover:text-white transition-colors"
+                      className="font-mono text-[10px] uppercase tracking-widest text-copper hover:text-amber-800 transition-colors"
                     >
                       View All {contractBalancesAsOf.length} Contracts
                     </button>
@@ -772,54 +717,53 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
             </div>
           </motion.div>
 
-          {/* Running Balance Chart */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="lg:col-span-12 glass-card p-8 min-h-[450px] flex flex-col hover:border-white/40 transition-colors duration-500 relative"
+            className="glass-card p-8 min-h-[450px] flex flex-col"
           >
             <div className="laser-beam" style={{ animationDelay: '3s' }} />
             <div className="refractive-highlight" />
             <div className="relative z-10 flex flex-col flex-1">
               <div className="flex justify-between items-center mb-8">
                 <div className="space-y-1">
-                  <h3 className="text-xl font-sans font-semibold">Running Balance</h3>
-                  <p className="font-mono text-[9px] uppercase tracking-widest text-gray-400">{viewType === 'monthly' ? 'Monthly' : 'Yearly'} Cumulative Portfolio Outstanding // Time Series</p>
+                  <h3 className="text-xl font-sans font-semibold text-slate-900">Running Balance</h3>
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-slate-500">{viewType === 'monthly' ? 'Monthly' : 'Yearly'} Cumulative Portfolio Outstanding // Time Series</p>
                 </div>
                 <div className="flex gap-2">
-                  <button 
+                  <button
                     onClick={() => setViewType('monthly')}
-                    className={`w-10 h-10 border border-white/5 flex items-center justify-center text-[10px] font-mono transition-colors ${viewType === 'monthly' ? 'bg-copper text-obsidian' : 'text-gray-500 hover:bg-white/5'}`}
+                    className={`w-10 h-10 border flex items-center justify-center text-[10px] font-mono transition-all ${viewType === 'monthly' ? 'bg-copper text-obsidian border-copper shadow-lg shadow-copper/20' : 'bg-white/60 backdrop-blur-sm border-white/50 text-slate-600 hover:bg-white/80'}`}
                   >
                     M
                   </button>
-                  <button 
+                  <button
                     onClick={() => setViewType('yearly')}
-                    className={`w-10 h-10 border border-white/5 flex items-center justify-center text-[10px] font-mono transition-colors ${viewType === 'yearly' ? 'bg-copper text-obsidian' : 'text-gray-500 hover:bg-white/5'}`}
+                    className={`w-10 h-10 border flex items-center justify-center text-[10px] font-mono transition-all ${viewType === 'yearly' ? 'bg-copper text-obsidian border-copper shadow-lg shadow-copper/20' : 'bg-white/60 backdrop-blur-sm border-white/50 text-slate-600 hover:bg-white/80'}`}
                   >
                     Y
                   </button>
                 </div>
               </div>
-              <div className="flex-1 min-h-[350px] overflow-x-auto scrollbar-thin scrollbar-thumb-copper/20 scrollbar-track-transparent">
-                <div style={{ 
-                  minWidth: viewType === 'monthly' ? Math.max(800, runningBalanceData.length * 60) : '100%', 
+              <div className="flex-1 min-h-[350px] overflow-x-auto">
+                <div style={{
+                  minWidth: viewType === 'monthly' ? Math.max(800, runningBalanceData.length * 60) : '100%',
                   height: '100%',
                   minHeight: '350px'
                 }}>
                   <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <LineChart data={runningBalanceData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                      <XAxis 
-                        dataKey="name" 
-                        stroke="rgba(255,255,255,0.1)" 
-                        tick={{fill: '#9ca3af', fontSize: 9, fontFamily: 'JetBrains Mono'}} 
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" vertical={false} />
+                      <XAxis
+                        dataKey="name"
+                        stroke="rgba(0,0,0,0.2)"
+                        tick={{fill: '#6b7280', fontSize: 9, fontFamily: 'JetBrains Mono'}}
                         axisLine={false}
                       />
-                      <YAxis 
-                        stroke="rgba(255,255,255,0.1)" 
-                        tick={{fill: '#9ca3af', fontSize: 9, fontFamily: 'JetBrains Mono'}} 
+                      <YAxis
+                        stroke="rgba(0,0,0,0.2)"
+                        tick={{fill: '#6b7280', fontSize: 9, fontFamily: 'JetBrains Mono'}}
                         tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
                         axisLine={false}
                       />
@@ -836,7 +780,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
                           <LabelList
                             dataKey="Balance"
                             position="top"
-                            style={{ fill: '#9ca3af', fontSize: 9, fontFamily: 'JetBrains Mono' }}
+                            style={{ fill: '#6b7280', fontSize: 9, fontFamily: 'JetBrains Mono' }}
                             formatter={(value: number) => `${(value / 1000000).toFixed(1)}M`}
                           />
                         )}
@@ -848,25 +792,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
             </div>
           </motion.div>
 
-          {/* Client Balances Section */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="lg:col-span-12 glass-card p-8 flex flex-col hover:border-white/40 transition-colors duration-500 relative"
+            className="glass-card p-8 flex flex-col"
           >
             <div className="laser-beam" style={{ animationDelay: '4s' }} />
             <div className="refractive-highlight" />
             <div className="relative z-10 flex flex-col flex-1">
               <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-6">
-                  <h3 className="text-xl font-sans font-semibold">Client Balances</h3>
+                  <h3 className="text-xl font-sans font-semibold text-slate-900">Client Balances</h3>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsClientsExpanded(!isClientsExpanded)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 transition-all group"
+                  className="flex items-center gap-2 px-4 py-2 bg-white/60 hover:bg-white/80 border border-white/50 rounded-lg transition-all group"
                 >
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-gray-400 group-hover:text-copper">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-slate-600 group-hover:text-copper">
                     {isClientsExpanded ? 'Collapse View' : 'Expand View'}
                   </span>
                   {isClientsExpanded ? <Minimize2 className="w-4 h-4 text-copper" /> : <Maximize2 className="w-4 h-4 text-copper" />}
@@ -876,33 +819,33 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
               <div className="mb-8 h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={clientBalancesAsOf.filter(item => item.balance > 0).slice(0, 10)}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                    <XAxis 
-                      dataKey="client" 
-                      stroke="rgba(255,255,255,0.1)" 
-                      tick={{fill: '#9ca3af', fontSize: 8, fontFamily: 'JetBrains Mono'}} 
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" vertical={false} />
+                    <XAxis
+                      dataKey="client"
+                      stroke="rgba(0,0,0,0.2)"
+                      tick={{fill: '#6b7280', fontSize: 8, fontFamily: 'JetBrains Mono'}}
                       axisLine={false}
                     />
-                    <YAxis 
-                      stroke="rgba(255,255,255,0.1)" 
-                      tick={{fill: '#9ca3af', fontSize: 9, fontFamily: 'JetBrains Mono'}} 
+                    <YAxis
+                      stroke="rgba(0,0,0,0.2)"
+                      tick={{fill: '#6b7280', fontSize: 9, fontFamily: 'JetBrains Mono'}}
                       tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
                       axisLine={false}
                     />
-                    <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                    <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
                     <Bar dataKey="balance" fill="#D97706" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
               <div className={`overflow-hidden transition-all duration-500 ${isClientsExpanded ? 'max-h-[2000px]' : 'max-h-[500px]'}`}>
-                <div className="overflow-y-auto max-h-[500px] scrollbar-hide">
+                <div className="overflow-y-auto max-h-[500px] rounded-lg">
                   <table className="w-full text-left border-collapse">
-                    <thead className="sticky top-0 bg-[#121626] z-10">
-                      <tr className="border-b border-white/5">
-                        <th className="p-4 font-mono text-[10px] uppercase text-gray-500 w-16">#</th>
-                        <th className="p-4 font-mono text-[10px] uppercase text-gray-500">Client Entity</th>
-                        <th className="p-4 font-mono text-[10px] uppercase text-gray-500 text-right">Outstanding Balance</th>
+                    <thead className="sticky top-0 bg-white/80 backdrop-blur-sm z-10">
+                      <tr className="border-b border-slate-200">
+                        <th className="p-4 font-mono text-[10px] uppercase text-slate-600 w-16">#</th>
+                        <th className="p-4 font-mono text-[10px] uppercase text-slate-600">Client Entity</th>
+                        <th className="p-4 font-mono text-[10px] uppercase text-slate-600 text-right">Outstanding Balance</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -910,10 +853,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
                         .filter(item => item.balance > 0)
                         .slice(0, isClientsExpanded ? undefined : 10)
                         .map((item, i) => (
-                          <tr key={item.client} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                            <td className="p-4 font-mono text-[10px] text-gray-600">{i + 1}</td>
-                            <td className="p-4 font-sans text-sm">{item.client}</td>
-                            <td className="p-4 font-mono text-sm text-right text-copper">{formatCurrency(item.balance)}</td>
+                          <tr key={item.client} className="border-b border-slate-100 hover:bg-white/50 transition-colors">
+                            <td className="p-4 font-mono text-[10px] text-slate-500">{i + 1}</td>
+                            <td className="p-4 font-sans text-sm text-slate-800">{item.client}</td>
+                            <td className="p-4 font-mono text-sm text-right text-copper font-semibold">{formatCurrency(item.balance)}</td>
                           </tr>
                         ))}
                     </tbody>
@@ -921,9 +864,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
                 </div>
                 {!isClientsExpanded && clientBalancesAsOf.filter(item => item.balance > 0).length > 10 && (
                   <div className="pt-4 text-center">
-                    <button 
+                    <button
                       onClick={() => setIsClientsExpanded(true)}
-                      className="font-mono text-[10px] uppercase tracking-widest text-copper hover:text-white transition-colors"
+                      className="font-mono text-[10px] uppercase tracking-widest text-copper hover:text-amber-800 transition-colors"
                     >
                       View All {clientBalancesAsOf.filter(item => item.balance > 0).length} Clients
                     </button>
@@ -933,30 +876,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
             </div>
           </motion.div>
 
-          {/* Department Dashboard */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="lg:col-span-12 glass-card p-8 min-h-[300px] flex flex-col hover:border-white/40 transition-colors duration-500 relative"
+            className="glass-card p-8 min-h-[300px] flex flex-col"
           >
             <div className="laser-beam" style={{ animationDelay: '5s' }} />
             <div className="refractive-highlight" />
             <div className="relative z-10">
-              <h3 className="text-xl font-sans font-semibold mb-8">Department Overview</h3>
+              <h3 className="text-xl font-sans font-semibold mb-8 text-slate-900">Department Overview</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {['VSS', 'TSS', 'NDT', 'TPI'].map((dept, i) => (
-                  <motion.div 
+                  <motion.div
                     key={dept}
-                    whileHover={{ scale: 1.02, backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
-                    className="p-6 border border-white/20 bg-white/5 transition-all glass-card relative overflow-hidden"
+                    whileHover={{ scale: 1.02 }}
+                    className="p-6 bg-white/50 backdrop-blur-sm border border-white/30 rounded-xl transition-all glass-card-inner relative overflow-hidden"
                   >
                     <div className="laser-beam opacity-20" style={{ animationDelay: `${i * 0.5}s`, animationDuration: '4s' }} />
                     <div className="refractive-highlight opacity-10" />
                     <div className="relative z-10">
-                      <p className="font-mono text-[10px] text-gray-400 uppercase mb-2">{dept}</p>
-                      <p className="text-2xl font-sans font-semibold text-white">
-                        {formatCurrency(departmentMetrics.get(dept) || 0)} <span className="text-xs font-normal text-gray-400">QAR</span>
+                      <p className="font-mono text-[10px] uppercase mb-2 text-slate-500">{dept}</p>
+                      <p className="text-2xl font-sans font-semibold text-slate-900">
+                        {formatCurrency(departmentMetrics.get(dept) || 0)} <span className="text-xs font-normal text-slate-500">QAR</span>
                       </p>
                     </div>
                   </motion.div>
@@ -968,21 +910,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
         </div>
       </main>
 
-      {/* Footer Decoration */}
-      <footer className="border-t border-white/5 py-12 px-8">
+      <footer className="border-t border-amber-200 py-12 px-8">
         <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="space-y-2">
-            <p className="font-serif italic text-2xl">Financial Core Intelligence</p>
-            <p className="font-mono text-[9px] uppercase tracking-[0.4em] text-gray-600">Precision Forecasting Protocol // © 2026</p>
+            <p className="font-serif italic text-2xl text-slate-800">Financial Core Intelligence</p>
+            <p className="font-mono text-[9px] uppercase tracking-[0.4em] text-slate-500">Precision Forecasting Protocol // © 2026</p>
           </div>
-          <div className="flex gap-12 font-mono text-[9px] uppercase tracking-widest text-gray-500">
+          <div className="flex gap-12 font-mono text-[9px] uppercase tracking-widest text-slate-500">
             <div className="space-y-1">
               <p className="text-copper">Location</p>
-              <p>Doha // Qatar</p>
+              <p className="text-slate-700">Doha // Qatar</p>
             </div>
             <div className="space-y-1">
               <p className="text-copper">Encryption</p>
-              <p>AES-256 // Active</p>
+              <p className="text-slate-700">AES-256 // Active</p>
             </div>
           </div>
         </div>
@@ -990,4 +931,3 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onNavigate }) => {
     </div>
   );
 };
-

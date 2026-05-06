@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { Dashboard } from './components/Dashboard';
 import { Previewer } from './components/Previewer';
 import { TopNav } from './components/TopNav';
+import { RecordManagement } from './components/RecordManagement';
 import { processContractData } from './utils/dataParser';
 import { ProcessedContract, RawContractData } from './types';
 import { ThemeProvider } from './context/ThemeContext';
@@ -15,7 +16,7 @@ import { bulkSaveEntries, fetchAllEntries } from './utils/supabase';
 export default function App() {
   const [rawData, setRawData] = useState<RawContractData[] | null>(null);
   const [processedData, setProcessedData] = useState<ProcessedContract[] | null>(null);
-  const [activeView, setActiveView] = useState<'entry' | 'preview' | 'dashboard'>('entry');
+  const [activeView, setActiveView] = useState<'entry' | 'preview' | 'dashboard' | 'records'>('entry');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -73,7 +74,7 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300">
+      <div className="min-h-screen bg-slate-50 text-slate-900">
         <TopNav activeView={activeView} onNavigate={setActiveView} />
 
         {isLoading ? (
@@ -90,6 +91,8 @@ export default function App() {
             onConfirm={handleConfirm}
             onCancel={handleCancel}
           />
+        ) : activeView === 'records' ? (
+          <RecordManagement />
         ) : (
           processedData && <Dashboard data={processedData} onNavigate={setActiveView} />
         )}

@@ -15,9 +15,9 @@
 }
 
 @layer base {
-  body {
-    background: radial-gradient(circle at 50% 50%, var(--color-burnt-orange) 0%, var(--color-obsidian) 100%);
-    @apply text-white antialiased selection:bg-copper selection:text-obsidian min-h-screen;
+  html, body {
+    background: #fff5d9;
+    @apply text-slate-900 antialiased selection:bg-copper selection:text-obsidian min-h-screen w-full;
   }
 
   h1, h2, h3, h4 {
@@ -31,27 +31,39 @@
 
 @layer components {
   .glass-card {
-    @apply bg-white/5 border border-white/20 backdrop-blur-[20px] rounded-none relative overflow-hidden;
-    box-shadow: 
-      inset 0 0 20px rgba(255, 255, 255, 0.05),
-      0 10px 30px rgba(0, 0, 0, 0.5);
+    @apply bg-white/60 backdrop-blur-2xl border border-white/80 rounded-2xl relative overflow-hidden;
+    box-shadow:
+      0 8px 40px rgba(139, 69, 19, 0.15),
+      0 0 0 1px rgba(255, 255, 255, 0.5) inset,
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+  }
+
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%, rgba(255,255,255,0.1) 100%);
+    pointer-events: none;
   }
 
   .laser-beam {
-    @apply absolute w-full h-[1px] bg-white/10;
+    @apply absolute w-full h-[1px] bg-gradient-to-r from-transparent via-amber-300/60 to-transparent;
     animation: scan 10s linear infinite;
   }
 
   .laser-beam::after {
     content: '';
     @apply absolute top-0 left-0 w-1 h-full bg-copper;
-    box-shadow: 0 0 10px 1px #D97706;
+    box-shadow: 0 0 12px 2px #D97706, 0 0 20px 4px rgba(217, 119, 6, 0.5);
     animation: dot-move 4s ease-in-out infinite alternate;
   }
 
   .refractive-highlight {
-    @apply absolute inset-0 pointer-events-none opacity-10;
-    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(255,255,255,0.05) 100%);
+    @apply absolute inset-0 pointer-events-none;
+    background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.3) 100%);
+    border-radius: inherit;
   }
 
   @keyframes scan {
@@ -70,9 +82,8 @@
     @apply border border-copper-muted;
   }
 
-  .noise-bg {
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    @apply opacity-[0.03] pointer-events-none absolute inset-0;
+  .glass-card-inner {
+    @apply bg-white/40 backdrop-blur-lg border border-white/50 rounded-xl;
+    box-shadow: 0 4px 16px rgba(139, 69, 19, 0.1);
   }
 }
-

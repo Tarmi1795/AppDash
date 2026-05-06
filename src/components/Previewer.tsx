@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { RawContractData } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Loader2, Upload, FileText, Search, RefreshCw, PenLine, Save, X, Plus } from 'lucide-react';
+import { Loader2, Upload, FileText, Search, PenLine, Save, X } from 'lucide-react';
 import { format, isValid } from 'date-fns';
 import { parseFile, generateTemplate } from '../utils/fileUtils';
 import { bulkSaveEntries } from '../utils/supabase';
@@ -230,13 +230,13 @@ export const Previewer: React.FC<PreviewerProps> = ({ data, onDataLoaded, onConf
           >
             <div className="space-y-2">
               <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-copper">System v2.0 // Contract Analysis Dashboard</span>
-              <h1 className="text-6xl md:text-7xl font-light leading-[0.9] tracking-tighter">
+              <h1 className="text-6xl md:text-7xl font-light leading-[0.9] tracking-tighter text-slate-900">
                 Applus <br />
                 <span className="italic font-serif text-copper">Velosi.</span>
               </h1>
             </div>
 
-            <p className="text-gray-400 font-sans text-sm leading-relaxed max-w-sm">
+            <p className="text-slate-600 font-sans text-sm leading-relaxed max-w-sm">
               Transform raw, inconsistent project data into a precision-prorated monthly revenue model.
               Engineered for absolute accuracy in financial forecasting.
             </p>
@@ -259,7 +259,7 @@ export const Previewer: React.FC<PreviewerProps> = ({ data, onDataLoaded, onConf
             className="lg:col-span-7"
           >
             <div
-              className={`relative group h-[450px] border border-white/10 bg-slate-dark/50 backdrop-blur-sm transition-all duration-500 overflow-hidden cursor-pointer ${isDragging ? 'border-copper scale-[1.02]' : 'hover:border-white/20'}`}
+              className={`relative group h-[450px] border border-amber-200 bg-amber-50/50 backdrop-blur-sm transition-all duration-500 overflow-hidden cursor-pointer ${isDragging ? 'border-copper scale-[1.02]' : 'hover:border-amber-300'}`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
@@ -281,20 +281,20 @@ export const Previewer: React.FC<PreviewerProps> = ({ data, onDataLoaded, onConf
                   ) : (
                     <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
                       <div className="relative inline-block">
-                        <Upload className={`w-12 h-12 transition-transform duration-500 ${isDragging ? 'scale-110 text-copper' : 'text-gray-600 group-hover:text-gray-400'}`} />
+                        <Upload className={`w-12 h-12 transition-transform duration-500 ${isDragging ? 'scale-110 text-copper' : 'text-slate-400 group-hover:text-slate-600'}`} />
                         <div className="absolute -inset-4 border border-copper/0 group-hover:border-copper/20 rounded-full transition-all duration-500 animate-pulse" />
                       </div>
                       <div className="space-y-2">
-                        <h3 className="text-2xl font-serif italic text-white">Initialize Upload</h3>
-                        <p className="text-gray-500 font-mono text-[10px] uppercase tracking-widest">
+                        <h3 className="text-2xl font-serif italic text-slate-800">Initialize Upload</h3>
+                        <p className="text-slate-500 font-mono text-[10px] uppercase tracking-widest">
                           Drag CSV/XLSX or <span className="text-copper underline cursor-pointer">Browse Local</span>
                         </p>
                       </div>
-                      <div className="pt-4 flex items-center justify-center gap-4 text-[10px] font-mono text-gray-600 uppercase tracking-tighter">
+                      <div className="pt-4 flex items-center justify-center gap-4 text-[10px] font-mono text-slate-400 uppercase tracking-tighter">
                         <span className="flex items-center gap-1"><FileText className="w-3 h-3" /> UTF-8</span>
-                        <span className="w-1 h-1 bg-gray-800 rounded-full" />
+                        <span className="w-1 h-1 bg-slate-300 rounded-full" />
                         <span>CSV / XLSX</span>
-                        <span className="w-1 h-1 bg-gray-800 rounded-full" />
+                        <span className="w-1 h-1 bg-slate-300 rounded-full" />
                         <span>Max 50MB</span>
                       </div>
                     </motion.div>
@@ -313,13 +313,13 @@ export const Previewer: React.FC<PreviewerProps> = ({ data, onDataLoaded, onConf
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-[1600px] mx-auto p-8 space-y-8 font-sans">
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-semibold text-slate-900 dark:text-white">
+        <h2 className="text-3xl font-semibold text-slate-900">
           {hasData ? 'Preview & Edit' : 'Upload'}
         </h2>
         {!isProcessing && hasData && (
           <div className="flex gap-4">
             {onCancel && (
-              <button onClick={onCancel} className="px-6 py-2 border border-slate-300 dark:border-white/10 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors text-sm font-medium">Cancel</button>
+              <button onClick={onCancel} className="px-6 py-2 border border-slate-300 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors text-sm font-medium">Cancel</button>
             )}
             <button
               onClick={() => setShowForm(!showForm)}
@@ -342,8 +342,8 @@ export const Previewer: React.FC<PreviewerProps> = ({ data, onDataLoaded, onConf
       {!hasData && (
         <div className="flex items-center justify-center py-12">
           <div className="text-center space-y-4">
-            <Upload className="w-16 h-16 mx-auto text-gray-600" />
-            <p className="text-gray-500 font-mono text-sm">No data uploaded yet</p>
+            <Upload className="w-16 h-16 mx-auto text-slate-400" />
+            <p className="text-slate-500 font-mono text-sm">No data uploaded yet</p>
             <button
               onClick={() => document.getElementById('file-upload')?.click()}
               className="px-6 py-3 bg-copper text-white font-mono text-sm hover:bg-copper/80 transition-colors"
@@ -364,39 +364,39 @@ export const Previewer: React.FC<PreviewerProps> = ({ data, onDataLoaded, onConf
             onSubmit={handleAddEntry}
             className="overflow-hidden"
           >
-            <div className="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-lg space-y-6">
+            <div className="p-6 bg-white border border-slate-200 rounded-lg space-y-6 shadow-lg">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                <h3 className="text-lg font-semibold text-slate-900">
                   {editingIndex !== null ? 'Edit Row' : 'Add New Row'}
                 </h3>
-                <button type="button" onClick={handleCancelForm} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">
-                  <X className="w-4 h-4 text-gray-500" />
+                <button type="button" onClick={handleCancelForm} className="p-1 hover:bg-slate-100 rounded">
+                  <X className="w-4 h-4 text-slate-500" />
                 </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-mono uppercase text-gray-500">Serial No.</label>
-                  <input type="text" value={formData['Serial No.']} onChange={(e) => handleInputChange('Serial No.', e.target.value)} className="w-full bg-transparent border-b border-slate-300 dark:border-white/20 p-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-copper" />
+                  <label className="text-[10px] font-mono uppercase text-slate-500">Serial No.</label>
+                  <input type="text" value={formData['Serial No.']} onChange={(e) => handleInputChange('Serial No.', e.target.value)} className="w-full bg-transparent border-b border-slate-300 p-2 text-sm text-slate-900 focus:outline-none focus:border-copper" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-mono uppercase text-gray-500">Customer Name *</label>
-                  <input type="text" value={formData['Customer Name']} onChange={(e) => handleInputChange('Customer Name', e.target.value)} className="w-full bg-transparent border-b border-slate-300 dark:border-white/20 p-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-copper" required />
+                  <label className="text-[10px] font-mono uppercase text-slate-500">Customer Name *</label>
+                  <input type="text" value={formData['Customer Name']} onChange={(e) => handleInputChange('Customer Name', e.target.value)} className="w-full bg-transparent border-b border-slate-300 p-2 text-sm text-slate-900 focus:outline-none focus:border-copper" required />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-mono uppercase text-gray-500">Contract No. *</label>
-                  <input type="text" value={formData['CONTRACT NO.']} onChange={(e) => handleInputChange('CONTRACT NO.', e.target.value)} className="w-full bg-transparent border-b border-slate-300 dark:border-white/20 p-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-copper" required />
+                  <label className="text-[10px] font-mono uppercase text-slate-500">Contract No. *</label>
+                  <input type="text" value={formData['CONTRACT NO.']} onChange={(e) => handleInputChange('CONTRACT NO.', e.target.value)} className="w-full bg-transparent border-b border-slate-300 p-2 text-sm text-slate-900 focus:outline-none focus:border-copper" required />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-mono uppercase text-gray-500">WBS</label>
-                  <input type="text" value={formData['WBS']} onChange={(e) => handleInputChange('WBS', e.target.value)} className="w-full bg-transparent border-b border-slate-300 dark:border-white/20 p-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-copper" />
+                  <label className="text-[10px] font-mono uppercase text-slate-500">WBS</label>
+                  <input type="text" value={formData['WBS']} onChange={(e) => handleInputChange('WBS', e.target.value)} className="w-full bg-transparent border-b border-slate-300 p-2 text-sm text-slate-900 focus:outline-none focus:border-copper" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-mono uppercase text-gray-500">Dhareeba No.</label>
-                  <input type="text" value={formData[' Dhareeba No. ']} onChange={(e) => handleInputChange(' Dhareeba No. ', e.target.value)} className="w-full bg-transparent border-b border-slate-300 dark:border-white/20 p-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-copper" />
+                  <label className="text-[10px] font-mono uppercase text-slate-500">Dhareeba No.</label>
+                  <input type="text" value={formData[' Dhareeba No. ']} onChange={(e) => handleInputChange(' Dhareeba No. ', e.target.value)} className="w-full bg-transparent border-b border-slate-300 p-2 text-sm text-slate-900 focus:outline-none focus:border-copper" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-mono uppercase text-gray-500">Currency</label>
-                  <select value={formData['Billing Currency (short name)']} onChange={(e) => handleInputChange('Billing Currency (short name)', e.target.value)} className="w-full bg-transparent border-b border-slate-300 dark:border-white/20 p-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-copper">
+                  <label className="text-[10px] font-mono uppercase text-slate-500">Currency</label>
+                  <select value={formData['Billing Currency (short name)']} onChange={(e) => handleInputChange('Billing Currency (short name)', e.target.value)} className="w-full bg-transparent border-b border-slate-300 p-2 text-sm text-slate-900 focus:outline-none focus:border-copper">
                     <option value="QAR">QAR</option>
                     <option value="USD">USD</option>
                     <option value="EUR">EUR</option>
@@ -404,35 +404,35 @@ export const Previewer: React.FC<PreviewerProps> = ({ data, onDataLoaded, onConf
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-mono uppercase text-gray-500">Country</label>
-                  <input type="text" value={formData['Project Country Location']} onChange={(e) => handleInputChange('Project Country Location', e.target.value)} className="w-full bg-transparent border-b border-slate-300 dark:border-white/20 p-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-copper" />
+                  <label className="text-[10px] font-mono uppercase text-slate-500">Country</label>
+                  <input type="text" value={formData['Project Country Location']} onChange={(e) => handleInputChange('Project Country Location', e.target.value)} className="w-full bg-transparent border-b border-slate-300 p-2 text-sm text-slate-900 focus:outline-none focus:border-copper" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-mono uppercase text-gray-500">Department</label>
-                  <select value={formData['DEPARTMENT']} onChange={(e) => handleInputChange('DEPARTMENT', e.target.value)} className="w-full bg-transparent border-b border-slate-300 dark:border-white/20 p-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-copper">
+                  <label className="text-[10px] font-mono uppercase text-slate-500">Department</label>
+                  <select value={formData['DEPARTMENT']} onChange={(e) => handleInputChange('DEPARTMENT', e.target.value)} className="w-full bg-transparent border-b border-slate-300 p-2 text-sm text-slate-900 focus:outline-none focus:border-copper">
                     <option value="">Select</option>
                     {departments.map(dept => (<option key={dept} value={dept}>{dept}</option>))}
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-mono uppercase text-gray-500">Contract Value QAR</label>
-                  <input type="number" value={formData['Contract Value QAR']} onChange={(e) => handleInputChange('Contract Value QAR', e.target.value)} className="w-full bg-transparent border-b border-slate-300 dark:border-white/20 p-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-copper" />
+                  <label className="text-[10px] font-mono uppercase text-slate-500">Contract Value QAR</label>
+                  <input type="number" value={formData['Contract Value QAR']} onChange={(e) => handleInputChange('Contract Value QAR', e.target.value)} className="w-full bg-transparent border-b border-slate-300 p-2 text-sm text-slate-900 focus:outline-none focus:border-copper" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-mono uppercase text-gray-500">Signing Date</label>
-                  <input type="date" value={formData['Signing Date (per contract)-dd/mm/yyy']} onChange={(e) => handleInputChange('Signing Date (per contract)-dd/mm/yyy', e.target.value)} className="w-full bg-transparent border-b border-slate-300 dark:border-white/20 p-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-copper" />
+                  <label className="text-[10px] font-mono uppercase text-slate-500">Signing Date</label>
+                  <input type="date" value={formData['Signing Date (per contract)-dd/mm/yyy']} onChange={(e) => handleInputChange('Signing Date (per contract)-dd/mm/yyy', e.target.value)} className="w-full bg-transparent border-b border-slate-300 p-2 text-sm text-slate-900 focus:outline-none focus:border-copper" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-mono uppercase text-gray-500">Start Date</label>
-                  <input type="date" value={formData['Start Date (per contract)-dd/mm/yyy']} onChange={(e) => handleInputChange('Start Date (per contract)-dd/mm/yyy', e.target.value)} className="w-full bg-transparent border-b border-slate-300 dark:border-white/20 p-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-copper" />
+                  <label className="text-[10px] font-mono uppercase text-slate-500">Start Date</label>
+                  <input type="date" value={formData['Start Date (per contract)-dd/mm/yyy']} onChange={(e) => handleInputChange('Start Date (per contract)-dd/mm/yyy', e.target.value)} className="w-full bg-transparent border-b border-slate-300 p-2 text-sm text-slate-900 focus:outline-none focus:border-copper" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-mono uppercase text-gray-500">Est. Completion</label>
-                  <input type="date" value={formData['Est. Completion Date-dd/mm/yyy']} onChange={(e) => handleInputChange('Est. Completion Date-dd/mm/yyy', e.target.value)} className="w-full bg-transparent border-b border-slate-300 dark:border-white/20 p-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-copper" />
+                  <label className="text-[10px] font-mono uppercase text-slate-500">Est. Completion</label>
+                  <input type="date" value={formData['Est. Completion Date-dd/mm/yyy']} onChange={(e) => handleInputChange('Est. Completion Date-dd/mm/yyy', e.target.value)} className="w-full bg-transparent border-b border-slate-300 p-2 text-sm text-slate-900 focus:outline-none focus:border-copper" />
                 </div>
               </div>
-              <div className="flex justify-end gap-4 pt-4 border-t border-slate-200 dark:border-white/10">
-                <button type="button" onClick={handleCancelForm} className="px-4 py-2 border border-slate-300 dark:border-white/10 text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-sm">Cancel</button>
+              <div className="flex justify-end gap-4 pt-4 border-t border-slate-200">
+                <button type="button" onClick={handleCancelForm} className="px-4 py-2 border border-slate-300 text-slate-600 hover:bg-slate-100 transition-colors text-sm">Cancel</button>
                 <button type="submit" className="px-6 py-2 bg-copper text-white text-sm font-medium hover:bg-copper/80 transition-colors flex items-center gap-2">
                   <Save className="w-4 h-4" />
                   {editingIndex !== null ? 'Update Row' : 'Add Row'}
@@ -447,43 +447,43 @@ export const Previewer: React.FC<PreviewerProps> = ({ data, onDataLoaded, onConf
         <>
           <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-600" />
-              <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search entries..." className="w-full bg-white/5 border border-white/10 rounded pl-9 pr-3 py-2 text-white font-mono text-xs focus:border-copper focus:outline-none transition-colors" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
+              <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search entries..." className="w-full bg-white border border-slate-200 rounded pl-9 pr-3 py-2 text-slate-900 font-mono text-xs focus:border-copper focus:outline-none transition-colors" />
             </div>
-            <span className="font-mono text-[10px] text-gray-500">{filteredData.length} entries</span>
+            <span className="font-mono text-[10px] text-slate-500">{filteredData.length} entries</span>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-white/10 overflow-x-auto">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50">
-                  <th className="p-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-16">#</th>
+                <tr className="border-b border-slate-200 bg-amber-50">
+                  <th className="p-3 text-xs font-semibold text-slate-500 uppercase tracking-wider w-16">#</th>
                   {headers.map(h => (
-                    <th key={h} className="p-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{h}</th>
+                    <th key={h} className="p-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
                   ))}
-                  <th className="p-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-24">Actions</th>
+                  <th className="p-3 text-xs font-semibold text-slate-500 uppercase tracking-wider w-24">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredData.map((row, rowIndex) => (
-                  <tr key={rowIndex} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                    <td className="p-3 text-xs text-gray-400 font-mono">{rowIndex + 1}</td>
+                  <tr key={rowIndex} className="border-b border-slate-100 hover:bg-amber-50/50 transition-colors">
+                    <td className="p-3 text-xs text-slate-400 font-mono">{rowIndex + 1}</td>
                     {headers.map(h => (
                       <td key={h} className="p-2">
                         <input
                           type="text"
                           value={formatValue(row[h as keyof RawContractData], h)}
                           onChange={(e) => handleCellChange(rowIndex, h as keyof RawContractData, e.target.value.replace(/,/g, ''))}
-                          className="w-full bg-transparent p-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
+                          className="w-full bg-transparent p-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-copper/30 rounded"
                         />
                       </td>
                     ))}
                     <td className="p-3">
                       <div className="flex items-center gap-2">
-                        <button onClick={() => handleEdit(rowIndex)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors" title="Edit">
-                          <PenLine className="w-3 h-3 text-gray-500" />
+                        <button onClick={() => handleEdit(rowIndex)} className="p-1.5 hover:bg-slate-100 rounded transition-colors" title="Edit">
+                          <PenLine className="w-3 h-3 text-slate-500" />
                         </button>
-                        <button onClick={() => handleDeleteRow(rowIndex)} className="p-1.5 hover:bg-red-100 dark:hover:bg-red-950/20 rounded transition-colors" title="Delete">
+                        <button onClick={() => handleDeleteRow(rowIndex)} className="p-1.5 hover:bg-red-100 rounded transition-colors" title="Delete">
                           <X className="w-3 h-3 text-red-500" />
                         </button>
                       </div>
