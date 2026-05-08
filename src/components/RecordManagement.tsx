@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, Plus, Edit2, Trash2, Save, X, RefreshCw, Database, ChevronLeft, ChevronRight } from 'lucide-react';
+import { format } from 'date-fns';
 import { fetchAllEntries, bulkSaveEntries, deleteDirectEntry } from '../utils/supabase';
 import { RawContractData } from '../types';
 
@@ -227,13 +228,32 @@ export const RecordManagement: React.FC = () => {
 
   const formatCellValue = (value: any, column: string) => {
     if (value === null || value === undefined || value === '') return '-';
+
+    // Format dates as YYYY-MM-DD
     if (column.toLowerCase().includes('date')) {
-      return String(value);
+      if (value instanceof Date) {
+        return format(value, 'yyyy-MM-dd');
+      }
+      const str = String(value);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+      return str;
     }
+
+    // Clean Dhareeba No. - remove decimal suffix
+    if (column === ' Dhareeba No. ') {
+      return String(value).replace(/\.00$/, '').replace(/\.0$/, '') || '-';
+    }
+
+    // Format currency values with commas
     if (column.toLowerCase().includes('value') || column.toLowerCase().includes('qar')) {
       const num = parseFloat(String(value).replace(/,/g, ''));
-      if (!isNaN(num)) return num.toLocaleString();
+      if (!isNaN(num)) {
+        return new Intl.NumberFormat('en-US', {
+          maximumFractionDigits: 0
+        }).format(num);
+      }
     }
+
     return String(value);
   };
 
@@ -460,7 +480,7 @@ export const RecordManagement: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search across all columns..."
-                className="w-full bg-white/80 backdrop-blur-sm border border-white/50 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-900 font-mono focus:ring-2 focus:ring-copper/30 focus:border-copper focus:outline-none transition-all"
+                className="w-full bg-white/80 backdrop-blur-sm border border-white/50 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-900 font-mono placeholder-gray-500 focus:ring-2 focus:ring-copper/30 focus:border-copper focus:outline-none transition-all"
               />
             </div>
             <span className="font-mono text-[10px] text-slate-500 bg-white/50 px-3 py-1.5 rounded-lg">

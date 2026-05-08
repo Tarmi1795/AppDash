@@ -116,16 +116,32 @@ export const Previewer: React.FC<PreviewerProps> = ({ data, onDataLoaded, onConf
 
   const formatValue = (val: any, header: string) => {
     if (val === null || val === undefined || val === '') return '';
-    const isDateColumn = header.toLowerCase().includes('date');
-    if (isDateColumn) {
-      const date = new Date(val);
-      if (isValid(date)) {
-        return format(date, 'dd/MM/yyyy');
+
+    if (header.toLowerCase().includes('date')) {
+      if (val instanceof Date && isValid(val)) {
+        return format(val, 'yyyy-MM-dd');
+      }
+      const str = String(val);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+        const date = new Date(str);
+        if (isValid(date)) return format(date, 'yyyy-MM-dd');
+      }
+      return str;
+    }
+
+    if (header === ' Dhareeba No. ') {
+      return String(val).replace(/\.00$/, '').replace(/\.0$/, '') || '';
+    }
+
+    if (header.toLowerCase().includes('value') || header.toLowerCase().includes('qar')) {
+      const num = parseFloat(String(val).replace(/,/g, ''));
+      if (!isNaN(num)) {
+        return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(num);
       }
     }
-    const strVal = String(val);
-    const num = parseFloat(strVal.replace(/,/g, ''));
-    return !isNaN(num) && !isDateColumn ? num.toLocaleString('en-US') : strVal;
+
+    return String(val);
   };
 
   const handleConfirm = async () => {
@@ -448,7 +464,7 @@ export const Previewer: React.FC<PreviewerProps> = ({ data, onDataLoaded, onConf
           <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
-              <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search entries..." className="w-full bg-white border border-slate-200 rounded pl-9 pr-3 py-2 text-slate-900 font-mono text-xs focus:border-copper focus:outline-none transition-colors" />
+              <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search entries..." className="w-full bg-white border border-slate-200 rounded pl-9 pr-3 py-2 text-slate-900 font-mono text-xs placeholder-gray-500 focus:border-copper focus:outline-none transition-colors" />
             </div>
             <span className="font-mono text-[10px] text-slate-500">{filteredData.length} entries</span>
           </div>
