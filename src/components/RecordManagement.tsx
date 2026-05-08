@@ -250,7 +250,7 @@ export const RecordManagement: React.FC = () => {
                 <Database className="w-5 h-5 text-copper" />
               </div>
               <div>
-                <h2 className="text-2xl font-serif italic text-slate-900">Record Management</h2>
+                <h2 className="text-2xl font-serif italic text-slate-900">Contract Details</h2>
                 <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">
                   View, Edit & Delete Records
                 </p>

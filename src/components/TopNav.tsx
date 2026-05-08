@@ -30,7 +30,7 @@ export const TopNav: React.FC<TopNavProps> = ({ activeView, onNavigate }) => {
             className={`px-4 py-1.5 rounded-md text-[10px] font-sans font-bold uppercase tracking-widest transition-all flex items-center gap-2 ${activeView === 'records' ? 'bg-copper text-obsidian shadow-[0_0_15px_rgba(217,119,6,0.3)]' : 'text-slate-600 hover:text-amber-700 hover:bg-amber-100'}`}
           >
             <Database className="w-3.5 h-3.5" />
-            Records
+            Contract Details
           </button>
         </div>
 
